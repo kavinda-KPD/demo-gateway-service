@@ -4,7 +4,7 @@ import { USER_ACCOUNT, USER_ACCOUNT_SERVICE_RABBIT_MQ } from './constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
-@Controller()
+@Controller('user-account')
 export class AppController {
   constructor(
     private readonly appService: AppService,
@@ -13,8 +13,8 @@ export class AppController {
     private readonly userAccountService: ClientProxy,
   ) {}
 
-  @Get('user-account')
-  async getUserAccount(): Promise<string> {
+  @Get()
+  async getUserAccount(): Promise<any> {
     return firstValueFrom(
       this.userAccountService.send(USER_ACCOUNT.GET_USER_ACCOUNT, {
         name: 'John Doe',
