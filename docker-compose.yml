@@ -3,6 +3,7 @@ services:
   gateway-service:
     build: .
     ports:
+      # 3000 is the port of the gateway service
       - '3000:3000'
     environment:
       - RABBITMQ_URL=amqp://rabbitmq:5672
