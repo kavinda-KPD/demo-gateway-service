@@ -1,0 +1,55 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [master]
+
+env:
+  AWS_SERVER_IP: ${{ secrets.AWS_SERVER_IP }}
+  AWS_SSH_KEY: ${{ secrets.AWS_SSH_KEY }}
+  AWS_USERNAME: ${{ secrets.AWS_USERNAME }}
+  DOCKER_COMPOSE_FILE: docker-compose.yml
+  PROJECT_DIR: /home/ubuntu/demo-gateway-service
+  SERVICE_NAME: demo-gateway-service
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.AWS_SSH_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+      - name: Deploy to AWS
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_SERVER_IP }} "
+            # Navigate to project directory or create it
+            mkdir -p $PROJECT_DIR
+            cd $PROJECT_DIR
+            
+            # Stop and remove all containers
+            docker-compose -f $DOCKER_COMPOSE_FILE down --rmi all --remove-orphans
+            
+            # Remove all unused images and networks
+            docker system prune -a -f
+            
+            # Clone the latest version of the code
+            rm -rf $PROJECT_DIR/*
+            git clone https://github.com/${{ github.repository }}.git .
+            
+            # Checkout the specific commit that triggered this workflow
+            git checkout ${{ github.sha }}
+            
+            # Build and start containers
+            docker-compose -f $DOCKER_COMPOSE_FILE up -d --build
+            
+            # Verify containers are running
+            docker ps
+          "
