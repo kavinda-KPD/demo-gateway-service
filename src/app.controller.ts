@@ -20,11 +20,15 @@ export class AppController {
 
   @Get()
   async getUserAccount(): Promise<any> {
-    console.log('getUserAccount 1');
+    console.log('testing 1');
     return firstValueFrom(
       this.userAccountService.send(USER_ACCOUNT.GET_USER_ACCOUNT, {
         name: 'John Doe',
       }),
+
+      // this.userAccountService.emit(USER_ACCOUNT.GET_USER_ACCOUNT, {
+      //     name: 'John Doe',
+      //   }),
     );
   }
 }
