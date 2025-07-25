@@ -1,22 +1,18 @@
-name: Deploy to AWS
+name: Deploy Gateway Service
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
 
 env:
   AWS_SERVER_IP: ${{ secrets.AWS_SERVER_IP }}
   AWS_SSH_KEY: ${{ secrets.AWS_SSH_KEY }}
   AWS_USERNAME: ${{ secrets.AWS_USERNAME }}
-  DOCKER_COMPOSE_FILE: docker-compose.yml
   PROJECT_DIR: /home/ubuntu/demo-gateway-service
-  SERVICE_NAME: demo-gateway-service
 
 jobs:
   deploy:
-    name: Deploy
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -25,31 +21,28 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.AWS_SSH_KEY }}
-          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+          known_hosts: 'just-a-placeholder'
 
-      - name: Deploy to AWS
+      - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_SERVER_IP }} "
-            # Navigate to project directory or create it
-            mkdir -p $PROJECT_DIR
-            cd $PROJECT_DIR
+            # Navigate to project directory
+            cd $PROJECT_DIR || exit 1
             
-            # Stop and remove all containers
-            docker-compose -f $DOCKER_COMPOSE_FILE down --rmi all --remove-orphans
+            # Stop and remove existing containers with their volumes
+            docker-compose down --volumes --remove-orphans || true
             
-            # Remove all unused images and networks
-            docker system prune -a -f
+            # Pull the latest code
+            git fetch --all
+            git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
+            git pull origin $(git rev-parse --abbrev-ref HEAD)
             
-            # Clone the latest version of the code
-            rm -rf $PROJECT_DIR/*
-            git clone https://github.com/${{ github.repository }}.git .
+            # Rebuild and start containers
+            docker-compose up --build --force-recreate -d
             
-            # Checkout the specific commit that triggered this workflow
-            git checkout ${{ github.sha }}
-            
-            # Build and start containers
-            docker-compose -f $DOCKER_COMPOSE_FILE up -d --build
-            
-            # Verify containers are running
-            docker ps
+            # Verify deployment
+            echo 'Current containers:'
+            docker ps -a
+            echo 'Gateway service logs:'
+            docker-compose logs --tail=20
           "
