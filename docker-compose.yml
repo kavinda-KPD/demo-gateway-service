@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  gateway-service:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    networks:
+      - game-system-network
+networks:
+  game-system-network:
+    external: true
