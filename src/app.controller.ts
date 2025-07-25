@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from './app.service';
-import { USER_ACCOUNT, USER_ACCOUNT_SERVICE_RABBIT_MQ } from './constants';
+import { USER_ACCOUNT, USER_ACCOUNT_SERVICE_CLIENT } from './constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,7 +9,7 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
 
-    @Inject(USER_ACCOUNT_SERVICE_RABBIT_MQ)
+    @Inject(USER_ACCOUNT_SERVICE_CLIENT)
     private readonly userAccountService: ClientProxy,
   ) {}
 
