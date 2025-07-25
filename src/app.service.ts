@@ -6,3 +6,10 @@ export class AppService {
     return 'Hello World!';
   }
 }
+
+@Injectable()
+export class LobbyService {
+  getHello(): string {
+    return 'Hello World!';
+  }
+}

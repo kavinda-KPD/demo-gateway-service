@@ -1,6 +1,11 @@
-import { Controller, Get, Inject } from '@nestjs/common';
-import { AppService } from './app.service';
-import { USER_ACCOUNT, USER_ACCOUNT_SERVICE_CLIENT } from './constants';
+import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import { AppService, LobbyService } from './app.service';
+import {
+  LOBBY,
+  LOBBY_SERVICE_CLIENT,
+  USER_ACCOUNT,
+  USER_ACCOUNT_SERVICE_CLIENT,
+} from './constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -19,6 +24,23 @@ export class AppController {
       this.userAccountService.send(USER_ACCOUNT.GET_USER_ACCOUNT, {
         name: 'John Doe',
       }),
+    );
+  }
+}
+
+@Controller('lobby')
+export class LobbyController {
+  constructor(
+    private readonly lobbyService: LobbyService,
+
+    @Inject(LOBBY_SERVICE_CLIENT)
+    private readonly lobbyServiceClient: ClientProxy,
+  ) {}
+
+  @Post('create')
+  async createLobby(@Body() body: any): Promise<any> {
+    return firstValueFrom(
+      this.lobbyServiceClient.send(LOBBY.CREATE_LOBBY, body),
     );
   }
 }
